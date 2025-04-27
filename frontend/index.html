@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASTRA-Cloud</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <style>
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeInDown 1s ease-out;
+    }
+
+    .animate-fade-in-down {
+      animation: fadeInDown 1.2s ease-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 text-white relative overflow-hidden">
+  <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
+  <div id="app" class="max-w-7xl mx-auto p-8"></div>
+
+  <script>
+    const API_URL = process.env.API_URL || '/api';
+    const app = document.getElementById('app');
+
+    function renderHome(configs) {
+      app.innerHTML = `
+        <header class="text-center animate-fade-in-down">
+          <h1 class="text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-pink-500">
+            ASTRA-Cloud
+          </h1>
+          <p class="mt-3 text-xl font-light opacity-80">Ваш надежный VPN-сервис в облаке</p>
+          <button onclick="navigate('admin')" class="mt-6 inline-block px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white font-semibold hover:scale-105 transition-transform duration-300">
+            <i data-feather="log-in" class="inline mr-2"></i> Вход для админа
+          </button>
+        </header>
+
+        <section class="mt-8">
+          <h2 class="text-3xl font-semibold mb-6 text-center animate-fade-in">Наши преимущества</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white/10 p-6 rounded-xl backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+              <i data-feather="zap" class="text-4xl text-cyan-400 mb-4"></i>
+              <h3 class="text-xl font-bold">Высокая скорость</h3>
+              <p class="mt-2 opacity-80">Стабильное соединение для стриминга и работы.</p>
+            </div>
+            <div class="bg-white/10 p-6 rounded-xl backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+              <i data-feather="lock" class="text-4xl text-cyan-400 mb-4"></i>
+              <h3 class="text-xl font-bold">Безопасность</h3>
+              <p class="mt-2 opacity-80">Ваши данные под надежной защитой.</p>
+            </div>
+            <div class="bg-white/10 p-6 rounded-xl backdrop-blur-md shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+              <i data-feather="globe" class="text-4xl text-cyan-400 mb-4"></i>
+              <h3 class="text-xl font-bold">Глобальный доступ</h3>
+              <p class="mt-2 opacity-80">Серверы в десятках стран мира.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="mt-8">
+          <h2 class="text-3xl font-semibold mb-6 text-center animate-fade-in">Доступные VPN-конфиги</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            ${configs.map(config => `
+              <div class="bg-white/10 p-6 rounded-xl backdrop-blur-md shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                <h3 class="text-xl font-semibold text-cyan-300">${config.country}</h3>
+                <p class="mt-2 opacity-80">Скачиваний: ${config.downloads}</p>
+                <a href="${API_URL.replace('/api', '')}${config.url}" class="mt-4 inline-block px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full text-white font-semibold hover:from-cyan-600 hover:to-blue-600 transition-colors">
+                  Скачать
+                </a>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      `;
+      feather.replace();
+    }
+
+    function renderAdminLogin() {
+      app.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center">
+          <div class="bg-white/10 p-8 rounded-xl backdrop-blur-md shadow-2xl max-w-md w-full animate-fade-in">
+            <h2 class="text-3xl font-bold text-white mb-6 text-center">Админ-панель ASTRA-Cloud</h2>
+            <div class="space-y-4">
+              <input
+                id="username"
+                type="text"
+                placeholder="Логин"
+                class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+              />
+              <input
+                id="password"
+                type="password"
+                placeholder="Пароль"
+                class="w-full p-3 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition"
+              />
+              <button
+                onclick="handleLogin()"
+                class="w-full p-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg text-white font-semibold hover:from-cyan-600 hover:to-blue-600 transition-colors flex items-center justify-center"
+              >
+                <i data-feather="log-in" class="mr-2"></i> Войти
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      feather.replace();
+    }
+
+    function renderAdminPanel(configs) {
+      app.innerHTML = `
+        <h2 class="text-3xl font-semibold mb-6 text-center animate-fade-in">Панель управления ASTRA-Cloud</h2>
+        <div class="mb-8">
+          <label class="block text-lg font-medium mb-2">
+            <i data-feather="upload" class="inline mr-2 text-cyan-400"></i> Загрузить конфиг
+          </label>
+          <input
+            id="config-upload"
+            type="file"
+            class="w-full p-3 rounded-lg bg-white/10 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:bg-cyan-500 file:text-white file:font-semibold hover:file:bg-cyan-600 transition"
+          />
+        </div>
+        <h3 class="text-2xl font-semibold mb-4">Статистика конфигов</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          ${configs.map(config => `
+            <div class="bg-white/10 p-6 rounded-xl backdrop-blur-md shadow-lg hover:shadow-2xl transition-all duration-300">
+              <h4 class="text-lg font-semibold text-cyan-300">${config.country}</h4>
+              <p class="mt-2 opacity-80">Скачиваний: ${config.downloads}</p>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      document.getElementById('config-upload').addEventListener('change', handleUpload);
+      feather.replace();
+    }
+
+    async function handleLogin() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const response = await fetch(`${API_URL}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        const configs = await fetchConfigs();
+        renderAdminPanel(configs);
+      } else {
+        alert('Неверный логин или пароль');
+      }
+    }
+
+    async function handleUpload(event) {
+      const file = event.target.files[0];
+      const formData = new FormData();
+      formData.append('config', file);
+      await fetch(`${API_URL}/admin/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      const configs = await fetchConfigs();
+      renderAdminPanel(configs);
+    }
+
+    async function fetchConfigs() {
+      const response = await fetch(`${API_URL}/configs`);
+      return await response.json();
+    }
+
+    function navigate(page) {
+      if (page === 'home') {
+        fetchConfigs().then(configs => renderHome(configs));
+      } else if (page === 'admin') {
+        renderAdminLogin();
+      }
+    }
+
+    // Инициализация
+    fetchConfigs().then(configs => renderHome(configs));
+  </script>
+</body>
+</html>
