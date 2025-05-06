@@ -2,11 +2,11 @@ import { useState } from 'react';
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 
-// Главная страница для проверки VPN-конфигураций ASTRACAT
+// Главная страница для пинга IP или домена
 export default function Home() {
-  const [config, setConfig] = useState(''); // Хранит введенный пользователем конфиг
-  const [result, setResult] = useState(null); // Хранит результат проверки от API
-  const [loading, setLoading] = useState(false); // Управляет состоянием загрузки
+  const [target, setTarget] = useState(''); // Введенный IP или домен
+  const [result, setResult] = useState(null); // Результат пинга
+  const [loading, setLoading] = useState(false); // Состояние загрузки
 
   // Обработка отправки формы
   const handleSubmit = async (e) => {
@@ -18,12 +18,12 @@ export default function Home() {
       const response = await fetch('/api/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ config }),
+        body: JSON.stringify({ target }),
       });
       const data = await response.json();
       setResult(data);
     } catch (error) {
-      setResult({ error: 'Ошибка при проверке конфига: ' + error.message });
+      setResult({ error: 'Ошибка при проверке: ' + error.message });
     } finally {
       setLoading(false);
     }
@@ -32,19 +32,19 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>ASTRACAT VPN Config Tester</title>
-        <meta name="description" content="Test VLESS and SOCKS configurations for ASTRACAT VPN" />
+        <title>ASTRACAT Ping Tester</title>
+        <meta name="description" content="Ping IP or domain for ASTRACAT" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>ASTRACAT VPN Config Tester</h1>
+        <h1 className={styles.title}>ASTRACAT Ping Tester</h1>
         <form onSubmit={handleSubmit} className={styles.form}>
           <input
             type="text"
-            value={config}
-            onChange={(e) => setConfig(e.target.value)}
-            placeholder="Введите конфиг (VLESS или SOCKS)"
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+            placeholder="Введите IP или домен (например, 85.209.2.112 или pubgmobile.com)"
             className={styles.input}
             required
           />
@@ -75,24 +75,12 @@ export default function Home() {
                     <td>{result.ping ? `${result.ping} ms` : 'Н/Д'}</td>
                   </tr>
                   <tr>
-                    <td>IP</td>
-                    <td>{result.ip}</td>
+                    <td>Введенный адрес</td>
+                    <td>{result.target}</td>
                   </tr>
                   <tr>
-                    <td>Порт</td>
-                    <td>{result.port}</td>
-                  </tr>
-                  <tr>
-                    <td>SNI</td>
-                    <td>{result.sni || 'Н/Д'}</td>
-                  </tr>
-                  <tr>
-                    <td>Тип</td>
-                    <td>{result.type}</td>
-                  </tr>
-                  <tr>
-                    <td>Имя</td>
-                    <td>{result.name || 'Н/Д'}</td>
+                    <td>Резолвленный IP</td>
+                    <td>{result.resolvedIp || 'Н/Д'}</td>
                   </tr>
                 </tbody>
               </table>
