@@ -30,7 +30,7 @@
   color: #1a73e8;
 }
 
-/* Форма для ввода конфига */
+/* Форма для ввода IP/домена */
 .form {
   display: flex;
   flex-direction: column;
@@ -39,7 +39,7 @@
   margin-top: 2rem;
 }
 
-/* Поле ввода конфига */
+/* Поле ввода */
 .input {
   padding: 0.75rem;
   font-size: 1rem;
