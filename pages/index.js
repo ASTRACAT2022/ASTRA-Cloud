@@ -2,11 +2,11 @@ import { useState } from 'react';
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 
-// Главная страница для проверки VPN-конфигураций
+// Главная страница для проверки VPN-конфигураций ASTRACAT
 export default function Home() {
-  const [config, setConfig] = useState(''); // Введенный конфиг
-  const [result, setResult] = useState(null); // Результат проверки
-  const [loading, setLoading] = useState(false); // Состояние загрузки
+  const [config, setConfig] = useState(''); // Хранит введенный пользователем конфиг
+  const [result, setResult] = useState(null); // Хранит результат проверки от API
+  const [loading, setLoading] = useState(false); // Управляет состоянием загрузки
 
   // Обработка отправки формы
   const handleSubmit = async (e) => {
