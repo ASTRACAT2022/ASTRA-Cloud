@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import fetch from 'node-fetch';
+import tls from 'tls';
 
 // API для проверки конфигураций VLESS и SOCKS
 export default async function handler(req, res) {
@@ -33,7 +34,15 @@ export default async function handler(req, res) {
 
       try {
         const ws = new WebSocket(wsUrl, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/91.0.4472.124' },
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/91.0.4472.124',
+          },
+          // Настройка TLS для WebSocket
+          tlsOptions: {
+            minVersion: 'TLSv1.2',
+            servername: params.sni || address, // Указываем SNI
+            rejectUnauthorized: params.security !== 'reality', // Отключаем проверку сертификата для REALITY
+          },
         });
 
         await new Promise((resolve, reject) => {
@@ -42,16 +51,23 @@ export default async function handler(req, res) {
             ws.close();
             resolve();
           });
-          ws.on('error', (err) => reject(err));
+          ws.on('error', (err) => {
+            console.error('WebSocket error:', err); // Логирование для диагностики
+            reject(err);
+          });
           setTimeout(() => reject(new Error('Таймаут соединения')), 5000);
         });
 
         result.status = 'Работает';
         result.ping = ping;
         result.sni = params.sni;
+        if (params.security === 'reality') {
+          result.security = 'reality';
+          result.pbk = params.pbk || 'Н/Д';
+        }
       } catch (error) {
         result.status = 'Не работает';
-        result.error = error.message;
+        result.error = `Ошибка WebSocket: ${error.message}`;
       }
     } else if (protocol === 'socks') {
       // Проверка SOCKS через HTTP-запрос
@@ -77,7 +93,7 @@ export default async function handler(req, res) {
         result.ip = data.ip;
       } catch (error) {
         result.status = 'Не работает';
-        result.error = error.message;
+        result.error = `Ошибка SOCKS: ${error.message}`;
       }
     } else {
       return res.status(400).json({ error: 'Неподдерживаемый протокол' });
@@ -85,6 +101,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json(result);
   } catch (error) {
+    console.error('API error:', error); // Логирование серверных ошибок
     return res.status(500).json({ error: 'Ошибка обработки конфига: ' + error.message });
   }
 }
