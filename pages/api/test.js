@@ -1,107 +1,88 @@
-import WebSocket from 'ws';
-import { SocksProxyAgent } from 'socks-proxy-agent';
 import fetch from 'node-fetch';
-import tls from 'tls';
+import net from 'net';
+import dns from 'dns/promises';
 
-// API для проверки конфигураций VLESS и SOCKS
+// API для пинга IP или домена
 export default async function handler(req, res) {
   // Проверка метода запроса
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Метод не поддерживается' });
   }
 
-  const { config } = req.body;
-  if (!config) {
-    return res.status(400).json({ error: 'Конфиг не предоставлен' });
+  const { target } = req.body;
+  if (!target) {
+    return res.status(400).json({ error: 'IP или домен не предоставлен' });
   }
 
   try {
-    // Парсинг конфига
-    const url = new URL(config);
-    const protocol = url.protocol.replace(':', '');
-    const [uuid, address] = url.username ? [url.username, url.hostname] : ['', url.hostname];
-    const port = url.port || (protocol === 'vless' ? 443 : 1080);
-    const params = Object.fromEntries(url.searchParams);
-    const name = url.hash.replace('#', '');
+    const result = { target };
+    let resolvedIp;
 
-    const result = { ip: address, port, type: protocol, name };
+    // Резолвинг DNS для домена
+    try {
+      const addresses = await dns.lookup(target);
+      resolvedIp = addresses.address;
+      result.resolvedIp = resolvedIp;
+    } catch (error) {
+      result.resolvedIp = 'Н/Д';
+    }
 
-    if (protocol === 'vless') {
-      // Проверка VLESS через WebSocket
-      const wsUrl = `wss://${address}:${port}${params.spx || '/'}?security=${params.security}&sni=${params.sni}&fp=${params.fp}`;
-      const startTime = Date.now();
-      let ping = null;
+    // Попытка HTTP-пинга
+    const startTime = Date.now();
+    let ping = null;
+    try {
+      const protocol = resolvedIp ? 'http' : 'https'; // IP — HTTP, домен — HTTPS
+      const url = `${protocol}://${target}`;
+      const response = await fetch(url, {
+        method: 'HEAD',
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/91.0.4472.124' },
+        timeout: 5000,
+      });
 
+      if (response.ok) {
+        ping = Date.now() - startTime;
+        result.status = 'Доступен';
+        result.ping = ping;
+      } else {
+        throw new Error('HTTP-запрос неуспешен');
+      }
+    } catch (httpError) {
+      // Попытка TCP-пинга, если HTTP не удался
       try {
-        const ws = new WebSocket(wsUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/91.0.4472.124',
-          },
-          // Настройка TLS для WebSocket
-          tlsOptions: {
-            minVersion: 'TLSv1.2',
-            servername: params.sni || address, // Указываем SNI
-            rejectUnauthorized: params.security !== 'reality', // Отключаем проверку сертификата для REALITY
-          },
-        });
-
+        const port = resolvedIp ? 80 : 443; // IP — порт 80, домен — 443
         await new Promise((resolve, reject) => {
-          ws.on('open', () => {
+          const socket = new net.Socket();
+          socket.setTimeout(5000);
+
+          socket.on('connect', () => {
             ping = Date.now() - startTime;
-            ws.close();
+            socket.destroy();
             resolve();
           });
-          ws.on('error', (err) => {
-            console.error('WebSocket error:', err); // Логирование для диагностики
+
+          socket.on('timeout', () => {
+            socket.destroy();
+            reject(new Error('Таймаут TCP-соединения'));
+          });
+
+          socket.on('error', (err) => {
+            socket.destroy();
             reject(err);
           });
-          setTimeout(() => reject(new Error('Таймаут соединения')), 5000);
+
+          socket.connect(port, resolvedIp || target);
         });
 
-        result.status = 'Работает';
+        result.status = 'Доступен (TCP)';
         result.ping = ping;
-        result.sni = params.sni;
-        if (params.security === 'reality') {
-          result.security = 'reality';
-          result.pbk = params.pbk || 'Н/Д';
-        }
-      } catch (error) {
-        result.status = 'Не работает';
-        result.error = `Ошибка WebSocket: ${error.message}`;
+      } catch (tcpError) {
+        result.status = 'Недоступен';
+        result.error = `Ошибка: ${httpError.message}, TCP: ${tcpError.message}`;
       }
-    } else if (protocol === 'socks') {
-      // Проверка SOCKS через HTTP-запрос
-      const agent = new SocksProxyAgent(`socks5://${address}:${port}`);
-      const startTime = Date.now();
-      let ping = null;
-
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
-
-        const response = await fetch('https://api.ipify.org?format=json', {
-          agent,
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-
-        const data = await response.json();
-        ping = Date.now() - startTime;
-
-        result.status = 'Работает';
-        result.ping = ping;
-        result.ip = data.ip;
-      } catch (error) {
-        result.status = 'Не работает';
-        result.error = `Ошибка SOCKS: ${error.message}`;
-      }
-    } else {
-      return res.status(400).json({ error: 'Неподдерживаемый протокол' });
     }
 
     return res.status(200).json(result);
   } catch (error) {
-    console.error('API error:', error); // Логирование серверных ошибок
-    return res.status(500).json({ error: 'Ошибка обработки конфига: ' + error.message });
+    return res.status(500).json({ error: 'Ошибка сервера: ' + error.message });
   }
 }
