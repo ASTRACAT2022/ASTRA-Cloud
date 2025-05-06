@@ -1,0 +1,113 @@
+/* Контейнер для всей страницы */
+.container {
+  min-height: 100vh;
+  padding: 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f2f5;
+}
+
+/* Основной блок контента */
+.main {
+  padding: 5rem 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+}
+
+/* Заголовок страницы */
+.title {
+  margin: 0;
+  line-height: 1.15;
+  font-size: 2.5rem;
+  text-align: center;
+  color: #1a73e8;
+}
+
+/* Форма для ввода конфига */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 2rem;
+}
+
+/* Поле ввода конфига */
+.input {
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Кнопка отправки формы */
+.button {
+  padding: 0.75rem;
+  font-size: 1rem;
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* Эффект наведения для кнопки */
+.button:hover {
+  background-color: #1557b0;
+}
+
+/* Стили для отключенной кнопки */
+.button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Контейнер для результатов */
+.result {
+  margin-top: 2rem;
+  width: 100%;
+}
+
+/* Стили для сообщения об ошибке */
+.error {
+  color: red;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Таблица результатов */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Стили для ячеек таблицы */
+.table th,
+.table td {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+/* Стили для заголовков таблицы */
+.table th {
+  background-color: #1a73e8;
+  color: white;
+}
+
+/* Чередование фона для строк таблицы */
+.table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
